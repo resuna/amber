@@ -1,0 +1,126 @@
+.TH AMBER 1 QMAIL
+.SH NAME
+amber -- amber list for incoming mail
+.SH SYNOPSIS
+.B amber
+.I [-lnNeE]
+.I [-d dir]
+.I [-c secs]
+.I [-t secs]
+.I [-T secs]
+.I [-i secs]
+.I [-I secs]
+.I [-b file]
+.I [-p NAME[=VAL]]
+.I [-s "NNN Message"]
+.I [command [args]...]
+
+.B amber
+.i -V
+.SH DESCRIPTION
+.B Amber
+sits in the tcpserver chain for qmail and
+implements an "amber list" for incoming mail, not accepting or
+rejecting it but deferring connections from new IP addresses for some
+time (default five minutes) before it starts accepting mail from them.
+.SH OPTIONS
+.TP
+-l
+Log messages to
+.B syslog
+instead of printing them on standard error. This is partly redundant for the
+normal configuration under qmail since standard error will already
+be logged to syslog. You can use this to take distinguish between different
+error priorities:
+.B amber
+generates LOG_ERR, LOG_WARNING, and LOG_NOTICE.
+.TP
+-d dir
+Change directory to "dir" first thing.
+.B Amber
+maintains its connection database in the current directory. It is recommended
+that the database be pruned periodically, with a command like
+.I find $dir -name '*.t' -mtime +2 -exec rm '{}' ';'
+.TP
+-t delay-time
+How long to keep delaying new connections. Time is seconds, [HH:]MM:SS, or
+any combination of DDd, HHh, MMm, and SSs (eg: 300, 5m, 5:00 are all the
+same period, as are 90, 1:30, or 1m30s).
+.TP
+-T long-delay-time
+Alternate delay to apply to connections from unresolved IP addresses. Default
+is 6 times delay-time.
+.TP
+-i idle-time
+Reset connection to idle after this long. Accepts the same time formats as
+.I -t
+.TP
+-I long-idle-time
+Alternate idle reset time for unresolved IP addresses. Default is idle-time.
+.TP
+-p NAME[=VALUE]
+If this variable is set (and has the specied value, if provided) then
+.B amber
+will pass it without checking. There may be multiple
+.I -p
+options. The default value "AMBERCHECK=NO" is implicitly in this list, but
+additional values (such as "RELAYCLIENT" or "RBLSMTPD=") can help avoid
+embarassment, depending on your configuration.
+.TP
+-n
+Throttle connections from unresolvable IP addresses. That is, after one
+connection is allowed, the address is immediately reset to idle, throttling
+the connection to at most once-per-long-delay-time.
+.TP
+-N
+Throttles connections from domains that contain strings that imply the
+connection is a dynamic IP. The compiled-in list is
+{"dsl", "cable", "dyn", "ppp", and "dial"}.
+.TP
+-c connection-delay
+Waits connection-delay seconds before continuing on to the next stage in the
+pipeline. This causes some simplistic spambots and viruses to disconnect.
+The
+.I -c
+option also logs eager-writers that send data during the connection
+delay (legitimate mail software is supposed to wait for the HELO before
+sending any commands) and applies the same delays and timeouts to them as
+unresolved IP addresses.
+.TP
+-e
+Throttle eager writers to one message per delay-time.
+.TP
+-E
+Defer eager writers indefinitely.
+.TP
+-s "NNN Message"
+Specify an alternate SMTP error code to generate on connection
+instead of the default "430 Message Deferred".
+.TP
+-b bad-file
+If everything else passes, check this file for bad IP addresses to explicitly
+block. The file format is one address per line, optionally followed by an
+alternate SMTP error code and message. This file may be fed from a spamtrap,
+or statically built, or created using any other method that makes sense in
+your environment.
+.TP
+command [args]...
+On success, run this command. On failure, send an SMTP code back down the
+socket and close the connection. If this is omitted then
+.B amber
+returns a success or failure status but doesn't send anything... normally
+a command such as "qmail-smtpd" would be provided, but this feature
+could be used if
+.B amber
+is run from a script.
+.TP
+-V
+Print version and exit.
+.SH EXAMPLES
+amber -i 1d -p RELAYCLIENT qmail-smtpd
+.SH LICENSE
+.B Amber
+is released under a "Berkeley" style license. See the file LICENSE for details.
+(tip me if you like this program, e-gold account 172426)
+.SH AUTHOR
+Peter da Silva <peter@taronga.com>
