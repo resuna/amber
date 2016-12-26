@@ -121,7 +121,7 @@ would be handled before amber.
 <dt>-V     Print version and exit.
 </dt>
 
-# OUTPUTS
+## OUTPUTS
 On  success,  run the specified command. On failure, send an
 SMTP code back down the socket and close	the  con-
 nection.	If  command  is omitted then amber returns a
