@@ -69,7 +69,8 @@ int idle = NOTIME;
 int long_idle = NOTIME;
 int error_mode = PRINTING;
 
-char *bad_ip = NULL;
+char *red_file = NULL;
+char *green_file = NULL;
 
 typedef struct _vl {
 	struct _vl *next;
@@ -82,10 +83,10 @@ char default_var[] = "AMBERCHECK=NO";
 char *smtp_code = "430 Message Deferred";
 
 char *usage_string =
-  "[-lnNeE] [-d dir] [-c secs] [-t secs] [-T secs] [-i secs] [-I secs] [-b file] [-s string] [-p NAME[=VAL]] [command [args...]]";
+  "[-lnNeE] [-d dir] [-c secs] [-t secs] [-T secs] [-i secs] [-I secs] [-r file] [-g file] [-s string] [-p NAME[=VAL]] [command [args...]]";
 
 char *version_string =
-  "AMBER version " VER " Copyright (c) 2004 Peter da Silva.";
+  "AMBER version " VER " Copyright (c) 2004-2006 Peter da Silva.";
 
 char *prog;
 char *remote_ip = NULL;
@@ -173,7 +174,9 @@ int main(int ac, char **av)
 				case 'i': idle = parse_time(arg); break;
 				case 'I': long_idle = parse_time(arg); break;
 				case 'd': workdir = arg; break;
-				case 'b': bad_ip = arg; break;
+				case 'r': /* red list */
+				case 'b': red_file = arg; break;
+				case 'g': green_file = arg; break;
 				case 'p': add_pass_env(arg); break;
 				case 's': smtp_code = arg; break;
 				default: syntax_exit("Unknown option", opt);
@@ -221,6 +224,14 @@ int main(int ac, char **av)
 	if(!remote_ip) {
 		log_warning("No TCPREMOTEIP");
 		normal_exit(av, UNKNOWN);
+	}
+
+	/* If there's a green list, use it */
+	if(green_file) {
+		if(check_file(remote_ip, green_file)) {
+			log_pass("GREENLIST OK");
+			normal_exit(av, ACCEPT);
+		}
 	}
 
 	/* If the host lookup failed, use a longer delay */
@@ -283,9 +294,9 @@ int main(int ac, char **av)
 	if(rec.first_seen + deferral > now)
 		normal_exit(av, DEFER);
 	else {
-		if(bad_ip) {
-			if(check_file(remote_ip, bad_ip)) {
-				log_warning("In 'bad IP' file.");
+		if(red_file) {
+			if(check_file(remote_ip, red_file)) {
+				log_warning("In REDLIST file.");
 				normal_exit(av, DEFER);
 			}
 		}

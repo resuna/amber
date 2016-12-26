@@ -4,7 +4,7 @@ F=amber.1 Makefile test.sh
 P=/usr/local
 M=$P/man/man1
 
-V=0.1
+V=0.2
 
 CFLAGS=-g
 

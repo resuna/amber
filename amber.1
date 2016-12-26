@@ -10,7 +10,8 @@ amber -- amber list for incoming mail
 .I [-T secs]
 .I [-i secs]
 .I [-I secs]
-.I [-b file]
+.I [-r file]
+.I [-g file]
 .I [-p NAME[=VAL]]
 .I [-s "NNN Message"]
 .I [command [args]...]
@@ -97,12 +98,20 @@ Defer eager writers indefinitely.
 Specify an alternate SMTP error code to generate on connection
 instead of the default "430 Message Deferred".
 .TP
--b bad-file
-If everything else passes, check this file for bad IP addresses to explicitly
+-r redlist-file
+If everything else passes, check this file for IP addresses to explicitly
 block. The file format is one address per line, optionally followed by an
 alternate SMTP error code and message. This file may be fed from a spamtrap,
 or statically built, or created using any other method that makes sense in
 your environment.
+.TP
+-g greenlist-file
+After the connection delay, check this file for IP addresses to explicitly
+allow. The file format is one address per line. This file may be fed from
+a mail server for POP3/IMAP4-before-SMTP, or any other method that fits your
+policies. This should be a small file for sort-lived greenlisting
+to avoid beating on tcpserver's tcp.smtp.cdb file (or your local
+equivalent)... long term greenlisting would be handled before amber.
 .TP
 command [args]...
 On success, run this command. On failure, send an SMTP code back down the
