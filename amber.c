@@ -38,6 +38,7 @@
 #include <sys/stat.h>
 #include <syslog.h>
 #include <stdarg.h>
+#include <ctype.h>
 
 /* Special time values */
 #define DEFTIME 300	/* 5 mins */
@@ -107,6 +108,7 @@ int make_dir(u_long addr);
 long parse_time(char *s);
 void add_pass_env(char *name);
 int input_check(int fd);
+int check_file(char *name, char *file);
 
 void usage(void)
 {
@@ -131,7 +133,7 @@ int main(int ac, char **av)
 	int eager_blocking = 0;
 	env_t *var;
 
-	if(prog = strrchr(*av, '/'))
+	if((prog = strrchr(*av, '/')))
 		prog++;
 	else
 		prog = *av;
@@ -144,7 +146,7 @@ int main(int ac, char **av)
 		if(**av != '-')
 			break;
 
-		while(opt = *++*av) {
+		while((opt = *++*av)) {
 			char *arg;
 
 			/* options without args */
@@ -385,7 +387,7 @@ void log_banner(char *banner)
 	char buffer[512], *s;
 
 	snprintf(buffer, 512, "%s: %s %s", prog, con_name(), banner);
-	if(s = strchr(buffer, '\r'))
+	if((s = strchr(buffer, '\r')))
 		*s = 0;
 
 	if(error_mode == PRINTING)
@@ -553,7 +555,7 @@ void add_pass_env(char *name)
 		exit(2);
 	}
 
-	if(val = strchr(name, '='))
+	if((val = strchr(name, '=')))
 		*val++ = 0;
 
 	new->next = pass_env_list;
